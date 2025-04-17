@@ -277,16 +277,98 @@ const Index = () => {
     setCallFilterDialogOpen(true);
   };
 
-  const handleStartCalls = () => {
+  const handleStartCalls = async () => {
     const selectedCount = getSelectedTenantsCount();
     
-    toast({
-      title: "AI呼叫已开始",
-      description: `已开始对 ${selectedCount} 位客户的AI自动呼叫`,
-    });
-    
-    setSelectedTenants({});
-    setSelectedBuildings({});
+    try {
+      const taskId = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      const { data: newCallRecord, error } = await supabase
+        .from('call_records')
+        .insert({
+          task_id: taskId,
+          creator: "张三丰",
+          status: 'in_progress',
+          total_calls: selectedCount,
+          connected_calls: 0,
+          rejected_calls: 0,
+          busy_calls: 0,
+          no_answer_calls: 0,
+          intercept_count: 0,
+          empty_count: 0,
+          debt_count: 0,
+          hangup_count: 0,
+          mute_count: 0
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error creating call record:", error);
+        toast({
+          title: "创建呼叫记录失败",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const callDetailsToInsert = Object.entries(selectedTenants)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([tenantId, _]) => {
+          const tenant = Object.values(tenants)
+            .flat()
+            .find(t => t.id === tenantId);
+          
+          if (!tenant) return null;
+          
+          const building = buildings.find(b => b.id === tenant.building_id);
+          const buildingName = building ? building.name : "";
+          
+          return {
+            record_id: newCallRecord.id,
+            tenant_name: tenant.name,
+            unit_info: `${buildingName}${tenant.unit_number}`,
+            debt_amount: tenant.debt_amount,
+            debt_period: tenant.debt_period,
+            call_status: 'no_answer',
+            has_recording: false
+          };
+        })
+        .filter(Boolean);
+      
+      if (callDetailsToInsert.length > 0) {
+        const { error: detailsError } = await supabase
+          .from('call_details')
+          .insert(callDetailsToInsert);
+        
+        if (detailsError) {
+          console.error("Error creating call details:", detailsError);
+          toast({
+            title: "创建呼叫详情失败",
+            description: detailsError.message,
+            variant: "destructive",
+          });
+        }
+      }
+      
+      toast({
+        title: "AI呼叫已开始",
+        description: `已开始对 ${selectedCount} 位客户的AI自动呼叫`,
+      });
+      
+      setSelectedTenants({});
+      setSelectedBuildings({});
+      
+      window.location.href = '/call-records';
+      
+    } catch (error: any) {
+      console.error("Error in handleStartCalls:", error);
+      toast({
+        title: "呼叫失败",
+        description: error.message || "执行自动呼叫过程中出现错误",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -423,7 +505,7 @@ const Index = () => {
             <p>以下情形系统呼叫时将自动过滤(不呼叫)</p>
             <ol className="list-decimal pl-5 space-y-1">
               <li>同一天内只允许呼叫一次，今日已呼叫的客户将自动过滤</li>
-              <li>有明确欠费原因且工单待关闭的。</li>
+              <li>有明确���费原因且工单待关闭的。</li>
               <li>客户已明确愿意缴费的。</li>
             </ol>
           </div>

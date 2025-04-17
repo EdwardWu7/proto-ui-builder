@@ -54,3 +54,9 @@ export interface CallDetail {
   call_duration?: number;
   has_recording: boolean;
 }
+
+export interface CreateCallRecordPayload {
+  task_id: string;
+  creator: string;
+  total_calls: number;
+}

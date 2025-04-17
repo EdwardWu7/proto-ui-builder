@@ -1,105 +1,113 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Search, ChevronRight, ChevronDown, Phone, PhoneCall, PhoneOff, PhoneForwarded, BarChart4 } from "lucide-react";
 import Header from '@/components/Header';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { CallRecord, CallDetail } from '@/types/buildings';
-
-// Mock data for demonstration
-const mockCallRecords: CallRecord[] = [
-  {
-    id: "1",
-    task_id: "20250427",
-    creator: "张三丰",
-    status: "in_progress",
-    created_at: "2025-04-27",
-    total_calls: 1898,
-    connected_calls: 1289,
-    rejected_calls: 123,
-    busy_calls: 12,
-    no_answer_calls: 123,
-    intercept_count: 45,
-    empty_count: 12,
-    debt_count: 12,
-    hangup_count: 35,
-    mute_count: 35
-  },
-  {
-    id: "2",
-    task_id: "20250427",
-    creator: "张三丰",
-    status: "completed",
-    created_at: "2025-04-27",
-    total_calls: 1898,
-    connected_calls: 1289,
-    rejected_calls: 123,
-    busy_calls: 12,
-    no_answer_calls: 123,
-    intercept_count: 45,
-    empty_count: 12,
-    debt_count: 12,
-    hangup_count: 35,
-    mute_count: 35
-  },
-  {
-    id: "3",
-    task_id: "20250425",
-    creator: "张三丰",
-    status: "completed",
-    created_at: "2025-04-25",
-    total_calls: 1898,
-    connected_calls: 1289,
-    rejected_calls: 123,
-    busy_calls: 12,
-    no_answer_calls: 123,
-    intercept_count: 45,
-    empty_count: 12,
-    debt_count: 12,
-    hangup_count: 35,
-    mute_count: 35
-  }
-];
-
-const mockCallDetails: CallDetail[] = [
-  {
-    id: "1",
-    record_id: "3",
-    tenant_name: "张三",
-    unit_info: "青花苑1栋2单元3001房",
-    debt_amount: 18892,
-    debt_period: 14,
-    call_status: "connected",
-    call_duration: 67,
-    has_recording: true
-  },
-  {
-    id: "2",
-    record_id: "3",
-    tenant_name: "张三",
-    unit_info: "青花苑1栋2单元3001房",
-    debt_amount: 18892,
-    debt_period: 14,
-    call_status: "rejected",
-    has_recording: false
-  }
-];
 
 const CallRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedRecordId, setExpandedRecordId] = useState<string | null>("3");
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+  const [callRecords, setCallRecords] = useState<CallRecord[]>([]);
+  const [callDetails, setCallDetails] = useState<{[key: string]: CallDetail[]}>({}); 
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSearch = () => {
-    console.log("Searching for:", searchTerm);
-    // Implement actual search logic here
+  useEffect(() => {
+    fetchCallRecords();
+  }, []);
+
+  const fetchCallRecords = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('call_records')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching call records:", error);
+        toast({
+          title: "数据加载失败",
+          description: "无法加载呼叫记录",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        setCallRecords(data);
+        if (data.length > 0) {
+          setExpandedRecordId(data[0].id);
+          await fetchCallDetails(data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error in fetchCallRecords:", error);
+      toast({
+        title: "数据加载失败",
+        description: "无法加载呼叫记录",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleExpand = (recordId: string) => {
+  const fetchCallDetails = async (recordId: string) => {
+    try {
+      if (callDetails[recordId]) return; // Already fetched
+      
+      const { data, error } = await supabase
+        .from('call_details')
+        .select('*')
+        .eq('record_id', recordId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching call details:", error);
+        toast({
+          title: "数据加载失败",
+          description: "无法加载呼叫详情",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        setCallDetails(prev => ({
+          ...prev,
+          [recordId]: data
+        }));
+      }
+    } catch (error) {
+      console.error("Error in fetchCallDetails:", error);
+      toast({
+        title: "数据加载失败",
+        description: "无法加载呼叫详情",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSearch = () => {
+    // Filter records client-side for now
+    // In a real app, this would likely be a server-side search
+    console.log("Searching for:", searchTerm);
+  };
+
+  const toggleExpand = async (recordId: string) => {
     if (expandedRecordId === recordId) {
       setExpandedRecordId(null);
     } else {
       setExpandedRecordId(recordId);
+      await fetchCallDetails(recordId);
     }
   };
 
@@ -139,6 +147,13 @@ const CallRecords = () => {
     }
   };
 
+  const filteredRecords = searchTerm
+    ? callRecords.filter(record => 
+        record.task_id.includes(searchTerm) || 
+        record.creator.includes(searchTerm)
+      )
+    : callRecords;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -156,11 +171,23 @@ const CallRecords = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button>搜索</Button>
+          <Button onClick={handleSearch}>搜索</Button>
         </div>
         
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-app-blue"></div>
+          </div>
+        )}
+        
+        {!loading && filteredRecords.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            没有找到匹配的呼叫记录
+          </div>
+        )}
+        
         <div className="space-y-4">
-          {mockCallRecords.map(record => (
+          {filteredRecords.map(record => (
             <div key={record.id} className="border rounded-lg bg-white overflow-hidden shadow-sm hover:shadow transition-shadow duration-200">
               {/* Record Header */}
               <div 
@@ -226,42 +253,48 @@ const CallRecords = () => {
               {/* Expanded Details */}
               {expandedRecordId === record.id && (
                 <div className="p-4 bg-gray-50 space-y-4">
-                  {mockCallDetails.filter(detail => detail.record_id === record.id).map(detail => (
-                    <Card key={detail.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-center p-4 border-b">
-                        <div>
-                          <div className="font-medium text-gray-800">{detail.tenant_name}</div>
-                          <div className="text-sm text-gray-500">{detail.unit_info}</div>
-                          <div className="text-sm text-red-600 mt-1 font-medium">
-                            欠费金额: <span className="font-bold">{detail.debt_amount}元</span> · 时长: {detail.debt_period}月
+                  {callDetails[record.id] && callDetails[record.id].length > 0 ? (
+                    callDetails[record.id].map(detail => (
+                      <Card key={detail.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-center p-4 border-b">
+                          <div>
+                            <div className="font-medium text-gray-800">{detail.tenant_name}</div>
+                            <div className="text-sm text-gray-500">{detail.unit_info}</div>
+                            <div className="text-sm text-red-600 mt-1 font-medium">
+                              欠费金额: <span className="font-bold">{detail.debt_amount}元</span> · 时长: {detail.debt_period}月
+                            </div>
                           </div>
+                          {detail.has_recording && (
+                            <Button variant="outline" size="sm">
+                              <PhoneCall className="mr-2 h-4 w-4" />
+                              听录音
+                            </Button>
+                          )}
                         </div>
-                        {detail.has_recording && (
-                          <Button variant="outline" size="sm">
-                            <PhoneCall className="mr-2 h-4 w-4" />
-                            听录音
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2">
-                        <div className={`p-3 text-center ${getCallStatusClass(detail.call_status)}`}>
-                          <div className="text-sm font-medium">
-                            {getCallStatusText(detail.call_status)}
+                        <div className="grid grid-cols-2">
+                          <div className={`p-3 text-center ${getCallStatusClass(detail.call_status)}`}>
+                            <div className="text-sm font-medium">
+                              {getCallStatusText(detail.call_status)}
+                            </div>
                           </div>
+                          {detail.call_duration && (
+                            <div className="p-3 text-center bg-gray-100">
+                              <div className="text-sm font-medium">通话时长: {detail.call_duration}秒</div>
+                            </div>
+                          )}
+                          {!detail.call_duration && (
+                            <div className="p-3 text-center bg-gray-100">
+                              <div className="text-sm font-medium">暂无对话文本</div>
+                            </div>
+                          )}
                         </div>
-                        {detail.call_duration && (
-                          <div className="p-3 text-center bg-gray-100">
-                            <div className="text-sm font-medium">通话时长: {detail.call_duration}秒</div>
-                          </div>
-                        )}
-                        {!detail.call_duration && (
-                          <div className="p-3 text-center bg-gray-100">
-                            <div className="text-sm font-medium">暂无对话文本</div>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      {callDetails[record.id] ? "暂无呼叫详情" : "加载呼叫详情中..."}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
