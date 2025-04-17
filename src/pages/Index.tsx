@@ -83,9 +83,15 @@ const Index = () => {
           }
 
           if (tenantsData) {
+            // Ensure the tenantsData conforms to the Tenant type
+            const typedTenantsData: Tenant[] = tenantsData.map(tenant => ({
+              ...tenant,
+              action_type: tenant.action_type as 'call' | 'work' | 'bill' | 'suggestion'
+            }));
+            
             setTenants(prev => ({
               ...prev,
-              [expandedBuilding]: tenantsData
+              [expandedBuilding]: typedTenantsData
             }));
           }
         } catch (error) {
@@ -114,11 +120,30 @@ const Index = () => {
   };
 
   // Filter buildings based on search query
-  const filteredBuildings = buildings.filter(building => 
-    building.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    building.network.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    building.manager.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBuildings = buildings.filter(building => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      building.name.toLowerCase().includes(searchLower) ||
+      building.network.toLowerCase().includes(searchLower) ||
+      building.manager.toLowerCase().includes(searchLower) ||
+      // Also search through tenants if building is expanded
+      (tenants[building.id] && tenants[building.id].some(tenant => 
+        tenant.name.toLowerCase().includes(searchLower) ||
+        tenant.unit_number.toLowerCase().includes(searchLower) ||
+        (tenant.debt_amount.toString().includes(searchLower))
+      ))
+    );
+  });
+
+  // Handle search button click
+  const handleSearch = () => {
+    // This will trigger the useEffect to re-filter buildings
+    // The filtering is already happening reactively based on searchQuery state
+    toast({
+      title: "搜索完成",
+      description: `找到 ${filteredBuildings.length} 个匹配结果`,
+    });
+  };
   
   return (
     <div className="flex flex-col min-h-screen pb-16 relative bg-gray-50">
@@ -137,7 +162,10 @@ const Index = () => {
               className="pl-10 border-gray-300 focus:border-app-blue shadow-sm rounded-lg"
             />
           </div>
-          <Button className="bg-app-blue hover:bg-app-blue/90 text-white shadow-sm rounded-lg">
+          <Button 
+            className="bg-app-blue hover:bg-app-blue/90 text-white shadow-sm rounded-lg"
+            onClick={handleSearch}
+          >
             搜索
           </Button>
         </div>
