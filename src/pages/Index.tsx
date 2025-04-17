@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Phone } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import Header from '@/components/Header';
 import FilterDropdown from '@/components/FilterDropdown';
 import PropertyItem from '@/components/PropertyItem';
 import TenantItem from '@/components/TenantItem';
+import CallDialog from '@/components/CallDialog';
 import { supabase } from "@/integrations/supabase/client";
 import { Building, Tenant } from '@/types/buildings';
 
@@ -19,9 +19,11 @@ const Index = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedTenants, setSelectedTenants] = useState<{[key: string]: boolean}>({});
   const [selectedBuildings, setSelectedBuildings] = useState<{[key: string]: boolean}>({});
+  const [callFilterDialogOpen, setCallFilterDialogOpen] = useState(false);
+  const [timeRestrictDialogOpen, setTimeRestrictDialogOpen] = useState(false);
+  const [isCallTimeAllowed, setIsCallTimeAllowed] = useState(true);
   const { toast } = useToast();
 
-  // Fetch buildings from Supabase
   useEffect(() => {
     const fetchBuildings = async () => {
       try {
@@ -43,7 +45,6 @@ const Index = () => {
 
         if (buildingsData) {
           setBuildings(buildingsData);
-          // Automatically expand the first building if any exist
           if (buildingsData.length > 0) {
             setExpandedBuilding(buildingsData[0].id);
           }
@@ -63,7 +64,6 @@ const Index = () => {
     fetchBuildings();
   }, [toast]);
 
-  // Fetch tenants for expanded building
   useEffect(() => {
     if (expandedBuilding) {
       const fetchTenants = async () => {
@@ -85,7 +85,6 @@ const Index = () => {
           }
 
           if (tenantsData) {
-            // Ensure the tenantsData conforms to the Tenant type
             const typedTenantsData: Tenant[] = tenantsData.map(tenant => ({
               ...tenant,
               action_type: tenant.action_type as 'call' | 'work' | 'bill' | 'suggestion'
@@ -106,12 +105,28 @@ const Index = () => {
         }
       };
 
-      // Only fetch if we don't already have the data
       if (!tenants[expandedBuilding]) {
         fetchTenants();
       }
     }
   }, [expandedBuilding, toast, tenants]);
+
+  useEffect(() => {
+    const checkCallTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      
+      setIsCallTimeAllowed(
+        (hours >= 9 && hours < 12) || 
+        (hours >= 14 && hours < 20)
+      );
+    };
+    
+    checkCallTime();
+    const interval = setInterval(checkCallTime, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExpand = (buildingId: string) => {
     if (expandedBuilding === buildingId) {
@@ -121,7 +136,6 @@ const Index = () => {
     }
   };
 
-  // Function to filter tenants based on search query
   const filterTenants = (buildingTenants: Tenant[], searchLower: string): Tenant[] => {
     if (!searchLower) return buildingTenants;
     
@@ -132,23 +146,18 @@ const Index = () => {
     );
   };
 
-  // Filter buildings based on search query
   const filteredBuildings = buildings.filter(building => {
     const searchLower = searchQuery.toLowerCase();
     
-    // If there's no search, show all buildings
     if (!searchLower) return true;
     
-    // Check if building properties match search
     const buildingMatches = 
       building.name.toLowerCase().includes(searchLower) ||
       building.network.toLowerCase().includes(searchLower) ||
       building.manager.toLowerCase().includes(searchLower);
     
-    // If building directly matches, show it
     if (buildingMatches) return true;
     
-    // Otherwise, check if any tenant in the building matches
     return tenants[building.id] && tenants[building.id].some(tenant => 
       tenant.name.toLowerCase().includes(searchLower) ||
       tenant.unit_number.toLowerCase().includes(searchLower) ||
@@ -156,25 +165,19 @@ const Index = () => {
     );
   });
 
-  // Handle search button click
   const handleSearch = () => {
-    // This will trigger the useEffect to re-filter buildings
-    // The filtering is already happening reactively based on searchQuery state
     toast({
       title: "搜索完成",
       description: `找到 ${filteredBuildings.length} 个匹配结果`,
     });
   };
-  
-  // Handle building selection (select/deselect all tenants in the building)
+
   const handleBuildingSelection = (buildingId: string, checked: boolean) => {
-    // Update building selection state
     setSelectedBuildings(prev => ({
       ...prev,
       [buildingId]: checked
     }));
     
-    // If we have tenants for this building, select/deselect all of them
     if (tenants[buildingId]) {
       const updatedTenants = { ...selectedTenants };
       
@@ -185,7 +188,6 @@ const Index = () => {
       setSelectedTenants(updatedTenants);
     }
     
-    // If not already fetched, fetch tenants for this building and select them
     if (!tenants[buildingId] && checked) {
       const fetchTenants = async () => {
         try {
@@ -206,19 +208,16 @@ const Index = () => {
           }
 
           if (tenantsData) {
-            // Ensure the tenantsData conforms to the Tenant type
             const typedTenantsData: Tenant[] = tenantsData.map(tenant => ({
               ...tenant,
               action_type: tenant.action_type as 'call' | 'work' | 'bill' | 'suggestion'
             }));
             
-            // Update tenants state
             setTenants(prev => ({
               ...prev,
               [buildingId]: typedTenantsData
             }));
             
-            // Select all tenants
             const updatedTenants = { ...selectedTenants };
             typedTenantsData.forEach(tenant => {
               updatedTenants[tenant.id] = checked;
@@ -243,15 +242,13 @@ const Index = () => {
       description: checked ? "已选择此楼所有住户" : "已取消选择此楼所有住户",
     });
   };
-  
-  // Handle individual tenant selection
+
   const handleTenantSelection = (tenantId: string, checked: boolean) => {
     setSelectedTenants(prev => ({
       ...prev,
       [tenantId]: checked
     }));
     
-    // Check if all tenants in a building are selected, if so, select the building too
     for (const buildingId in tenants) {
       const buildingTenants = tenants[buildingId];
       const allSelected = buildingTenants.every(tenant => 
@@ -266,18 +263,37 @@ const Index = () => {
       }
     }
   };
-  
-  // Get count of selected tenants
+
   const getSelectedTenantsCount = () => {
     return Object.values(selectedTenants).filter(Boolean).length;
   };
-  
+
+  const handleCallButtonClick = () => {
+    if (!isCallTimeAllowed) {
+      setTimeRestrictDialogOpen(true);
+      return;
+    }
+    
+    setCallFilterDialogOpen(true);
+  };
+
+  const handleStartCalls = () => {
+    const selectedCount = getSelectedTenantsCount();
+    
+    toast({
+      title: "AI呼叫已开始",
+      description: `已开始对 ${selectedCount} 位客户的AI自动呼叫`,
+    });
+    
+    setSelectedTenants({});
+    setSelectedBuildings({});
+  };
+
   return (
     <div className="flex flex-col min-h-screen pb-16 relative bg-gray-50">
       <Header />
       
       <main className="flex-1 px-4 pb-4">
-        {/* Search Bar */}
         <div className="flex items-center gap-2 my-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -297,28 +313,24 @@ const Index = () => {
           </Button>
         </div>
         
-        {/* Filters */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
           <FilterDropdown label="客户标签" />
           <FilterDropdown label="催缴次数" />
           <FilterDropdown label="进度标签" />
         </div>
         
-        {/* Loading State */}
         {loading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-app-blue"></div>
           </div>
         )}
         
-        {/* No Results */}
         {!loading && filteredBuildings.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             没有找到匹配的结果
           </div>
         )}
         
-        {/* Building List */}
         <div className="space-y-3">
           {filteredBuildings.map(building => (
             <div key={building.id} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
@@ -345,7 +357,6 @@ const Index = () => {
                     </div>
                   ) : (
                     searchQuery ? 
-                      // When searching, only show matching tenants
                       filterTenants(tenants[building.id], searchQuery.toLowerCase()).map(tenant => (
                         <TenantItem 
                           key={tenant.id} 
@@ -366,7 +377,6 @@ const Index = () => {
                         />
                       ))
                     : 
-                      // When not searching, show all tenants
                       tenants[building.id].map(tenant => (
                         <TenantItem 
                           key={tenant.id} 
@@ -394,15 +404,47 @@ const Index = () => {
         </div>
       </main>
       
-      {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg">
         <Button 
           className="w-full bg-app-orange hover:bg-app-orange/90 text-white font-medium rounded-lg py-5"
           disabled={getSelectedTenantsCount() === 0}
+          onClick={handleCallButtonClick}
         >
           一键AI呼叫 {getSelectedTenantsCount() > 0 ? `(${getSelectedTenantsCount()})` : ''}
         </Button>
       </div>
+      
+      <CallDialog
+        open={callFilterDialogOpen}
+        onOpenChange={setCallFilterDialogOpen}
+        title="提示"
+        content={
+          <div className="space-y-2">
+            <p>以下情形系统呼叫时将自动过滤(不呼叫)</p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>同一天内只允许呼叫一次，今日已呼叫的客户将自动过滤</li>
+              <li>有明确欠费原因且工单待关闭的。</li>
+              <li>客户已明确愿意缴费的。</li>
+            </ol>
+          </div>
+        }
+        cancelText="取消"
+        confirmText="确认开始"
+        onCancel={() => setCallFilterDialogOpen(false)}
+        onConfirm={handleStartCalls}
+      />
+      
+      <CallDialog
+        open={timeRestrictDialogOpen}
+        onOpenChange={setTimeRestrictDialogOpen}
+        title="提示"
+        content={
+          <p>当前时段不可呼叫客户！可呼叫时段为上午9:00至12点，下午14:00至20:00</p>
+        }
+        confirmText="我知道了"
+        singleButton={true}
+        onConfirm={() => setTimeRestrictDialogOpen(false)}
+      />
     </div>
   );
 };
