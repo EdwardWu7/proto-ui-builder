@@ -2,6 +2,7 @@
 import React from 'react';
 import { Menu, Phone, Building, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   return (
@@ -14,10 +15,12 @@ const Header = () => {
           <ArrowRight className="w-3 h-3 ml-1" />
         </Button>
       </div>
-      <Button variant="ghost" className="text-app-orange p-2 h-auto flex items-center hover:bg-orange-50 rounded-full transition-colors">
-        <Phone className="w-4 h-4 mr-1" />
-        <span>呼叫记录</span>
-      </Button>
+      <Link to="/call-records">
+        <Button variant="ghost" className="text-app-orange p-2 h-auto flex items-center hover:bg-orange-50 rounded-full transition-colors">
+          <Phone className="w-4 h-4 mr-1" />
+          <span>呼叫记录</span>
+        </Button>
+      </Link>
     </header>
   );
 };
