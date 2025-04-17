@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Phone, Calendar, Clock, Tag, AlertCircle } from 'lucide-react';
+import { Phone, Calendar, Clock, Tag, AlertCircle, Smile, ShieldAlert, Skull } from 'lucide-react';
 
 interface Tenant {
   id: string;
@@ -59,6 +59,32 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
     return match ? match[0] : '1';
   };
 
+  // Function to get the appropriate icon based on display type
+  const getDisplayTypeIcon = () => {
+    if (tenant.displayType.includes('友好')) {
+      return <Smile className="h-3 w-3 mr-1 text-green-500" />;
+    } else if (tenant.displayType.includes('谨慎')) {
+      return <ShieldAlert className="h-3 w-3 mr-1 text-amber-500" />;
+    } else if (tenant.displayType.includes('恶意')) {
+      return <Skull className="h-3 w-3 mr-1 text-red-500" />;
+    } else {
+      return <Tag className="h-3 w-3 mr-1 text-amber-500" />;
+    }
+  };
+
+  // Function to get appropriate background color based on display type
+  const getDisplayTypeBadgeClass = () => {
+    if (tenant.displayType.includes('友好')) {
+      return "tag-badge bg-green-50 border-green-200";
+    } else if (tenant.displayType.includes('谨慎')) {
+      return "tag-badge bg-amber-50 border-amber-200";
+    } else if (tenant.displayType.includes('恶意')) {
+      return "tag-badge bg-red-50 border-red-200";
+    } else {
+      return "tag-badge bg-amber-50 border-amber-200";
+    }
+  };
+
   return (
     <div className="p-3 border-b border-gray-100 bg-white hover:bg-gray-50">
       <div className="flex items-start justify-between mb-1">
@@ -81,8 +107,8 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
             <Phone className="h-3 w-3 mr-1 text-blue-500" />
             <span>{getCallCount()}</span>
           </span>
-          <span className="tag-badge bg-amber-50 border-amber-200">
-            <Tag className="h-3 w-3 mr-1 text-amber-500" />
+          <span className={getDisplayTypeBadgeClass()}>
+            {getDisplayTypeIcon()}
             <span>{tenant.displayType}</span>
           </span>
           <span className="tag-badge bg-gray-100 border-gray-300">
