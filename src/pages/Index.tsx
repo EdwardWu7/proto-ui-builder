@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Phone } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -119,19 +118,38 @@ const Index = () => {
     }
   };
 
+  // Function to filter tenants based on search query
+  const filterTenants = (buildingTenants: Tenant[], searchLower: string): Tenant[] => {
+    if (!searchLower) return buildingTenants;
+    
+    return buildingTenants.filter(tenant => 
+      tenant.name.toLowerCase().includes(searchLower) ||
+      tenant.unit_number.toLowerCase().includes(searchLower) ||
+      tenant.debt_amount.toString().includes(searchLower)
+    );
+  };
+
   // Filter buildings based on search query
   const filteredBuildings = buildings.filter(building => {
     const searchLower = searchQuery.toLowerCase();
-    return (
+    
+    // If there's no search, show all buildings
+    if (!searchLower) return true;
+    
+    // Check if building properties match search
+    const buildingMatches = 
       building.name.toLowerCase().includes(searchLower) ||
       building.network.toLowerCase().includes(searchLower) ||
-      building.manager.toLowerCase().includes(searchLower) ||
-      // Also search through tenants if building is expanded
-      (tenants[building.id] && tenants[building.id].some(tenant => 
-        tenant.name.toLowerCase().includes(searchLower) ||
-        tenant.unit_number.toLowerCase().includes(searchLower) ||
-        (tenant.debt_amount.toString().includes(searchLower))
-      ))
+      building.manager.toLowerCase().includes(searchLower);
+    
+    // If building directly matches, show it
+    if (buildingMatches) return true;
+    
+    // Otherwise, check if any tenant in the building matches
+    return tenants[building.id] && tenants[building.id].some(tenant => 
+      tenant.name.toLowerCase().includes(searchLower) ||
+      tenant.unit_number.toLowerCase().includes(searchLower) ||
+      tenant.debt_amount.toString().includes(searchLower)
     );
   });
 
@@ -215,23 +233,44 @@ const Index = () => {
                       该建筑物下暂无住户
                     </div>
                   ) : (
-                    tenants[building.id].map(tenant => (
-                      <TenantItem 
-                        key={tenant.id} 
-                        tenant={{
-                          id: tenant.id,
-                          name: tenant.name,
-                          building: `${building.name}${tenant.unit_number}`,
-                          debtAmount: `欠:${tenant.debt_amount}元`,
-                          debtPeriod: `欠费时长:${tenant.debt_period}月`,
-                          callCount: `本月已叫${tenant.call_count}次`,
-                          displayType: tenant.display_type,
-                          status: tenant.status,
-                          actionType: tenant.action_type,
-                          actionText: tenant.action_text || undefined
-                        }}
-                      />
-                    ))
+                    searchQuery ? 
+                      // When searching, only show matching tenants
+                      filterTenants(tenants[building.id], searchQuery.toLowerCase()).map(tenant => (
+                        <TenantItem 
+                          key={tenant.id} 
+                          tenant={{
+                            id: tenant.id,
+                            name: tenant.name,
+                            building: `${building.name}${tenant.unit_number}`,
+                            debtAmount: `欠:${tenant.debt_amount}元`,
+                            debtPeriod: `欠费时长:${tenant.debt_period}月`,
+                            callCount: `本月已叫${tenant.call_count}次`,
+                            displayType: tenant.display_type,
+                            status: tenant.status,
+                            actionType: tenant.action_type,
+                            actionText: tenant.action_text || undefined
+                          }}
+                        />
+                      ))
+                    : 
+                      // When not searching, show all tenants
+                      tenants[building.id].map(tenant => (
+                        <TenantItem 
+                          key={tenant.id} 
+                          tenant={{
+                            id: tenant.id,
+                            name: tenant.name,
+                            building: `${building.name}${tenant.unit_number}`,
+                            debtAmount: `欠:${tenant.debt_amount}元`,
+                            debtPeriod: `欠费时长:${tenant.debt_period}月`,
+                            callCount: `本月已叫${tenant.call_count}次`,
+                            displayType: tenant.display_type,
+                            status: tenant.status,
+                            actionType: tenant.action_type,
+                            actionText: tenant.action_text || undefined
+                          }}
+                        />
+                      ))
                   )}
                 </div>
               )}
