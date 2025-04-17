@@ -9,7 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      buildings: {
+        Row: {
+          created_at: string
+          id: string
+          manager: string
+          name: string
+          network: string
+          units: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manager: string
+          name: string
+          network: string
+          units: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manager?: string
+          name?: string
+          network?: string
+          units?: number
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          action_text: string | null
+          action_type: string
+          building_id: string
+          call_count: number
+          created_at: string
+          debt_amount: number
+          debt_period: number
+          display_type: string
+          id: string
+          name: string
+          status: string
+          unit_number: string
+        }
+        Insert: {
+          action_text?: string | null
+          action_type?: string
+          building_id: string
+          call_count?: number
+          created_at?: string
+          debt_amount?: number
+          debt_period?: number
+          display_type?: string
+          id?: string
+          name: string
+          status?: string
+          unit_number: string
+        }
+        Update: {
+          action_text?: string | null
+          action_type?: string
+          building_id?: string
+          call_count?: number
+          created_at?: string
+          debt_amount?: number
+          debt_period?: number
+          display_type?: string
+          id?: string
+          name?: string
+          status?: string
+          unit_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
