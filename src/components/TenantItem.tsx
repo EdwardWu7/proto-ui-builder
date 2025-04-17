@@ -35,13 +35,25 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
             {tenant.actionText || '拜访建议'}
           </Button>
         );
+      case 'call':
+        return (
+          <Button className="action-badge action-badge-blue">
+            AI呼叫
+          </Button>
+        );
+      case 'work':
+        return (
+          <Button className="action-badge action-badge-gray">
+            关闭工单
+          </Button>
+        );
       default:
         return null;
     }
   };
 
   return (
-    <div className="p-3 border-b border-gray-100 bg-white">
+    <div className="p-3 border-b border-gray-100 bg-white hover:bg-gray-50">
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2">
           <Checkbox id={`tenant-${tenant.id}`} />
@@ -53,7 +65,7 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
       <div className="ml-6 text-sm text-gray-600">
         <p>{tenant.building}</p>
         <div className="flex items-center gap-2 mt-1">
-          <span>{tenant.debtAmount}</span>
+          <span className="text-red-500 font-medium">{tenant.debtAmount}</span>
           <span>{tenant.debtPeriod}</span>
         </div>
         

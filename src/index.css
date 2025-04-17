@@ -27,13 +27,13 @@
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -95,25 +95,53 @@
 }
 
 .filter-badge {
-  @apply bg-app-gray text-gray-700 px-2 py-1 rounded-sm text-xs;
+  @apply text-gray-700 px-3 py-1.5 rounded-full text-xs font-medium;
 }
 
 .tag-badge {
-  @apply bg-app-gray text-gray-700 px-2 py-1 rounded-sm text-xs mx-1;
+  @apply bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium mx-1 border border-gray-200;
 }
 
 .action-badge {
-  @apply text-white px-3 py-1 rounded-sm text-xs font-medium;
+  @apply text-white px-4 py-1.5 rounded-full text-xs font-medium shadow-sm;
 }
 
 .action-badge-orange {
-  @apply bg-app-orange;
+  @apply bg-app-orange hover:bg-app-orange/90;
 }
 
 .action-badge-blue {
-  @apply bg-app-blue;
+  @apply bg-app-blue hover:bg-app-blue/90;
 }
 
 .action-badge-gray {
-  @apply bg-app-darkGray;
+  @apply bg-app-darkGray hover:bg-app-darkGray/90;
+}
+
+/* 添加平滑滚动和过渡效果 */
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d1d1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b1b1b1;
 }

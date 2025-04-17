@@ -11,7 +11,7 @@ import TenantItem from '@/components/TenantItem';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedBuilding, setExpandedBuilding] = useState<string | null>('青花苑14栋');
+  const [expandedBuilding, setExpandedBuilding] = useState<string | null>('building2');
   
   const buildings = [
     {
@@ -38,7 +38,7 @@ const Index = () => {
           callCount: '本月已叫1次',
           displayType: '友好提示型',
           status: '待首次AI呼叫',
-          actionType: 'call'
+          actionType: 'call' as const
         },
         {
           id: 'tenant2',
@@ -49,7 +49,7 @@ const Index = () => {
           callCount: '本月已叫1次',
           displayType: '友好提示型',
           status: '待关闭工单',
-          actionType: 'work'
+          actionType: 'work' as const
         },
         {
           id: 'tenant3',
@@ -60,7 +60,7 @@ const Index = () => {
           callCount: '本月已叫1次',
           displayType: '友好提示型',
           status: '有缴费意愿',
-          actionType: 'bill',
+          actionType: 'bill' as const,
           actionText: '发送账单'
         },
         {
@@ -72,7 +72,7 @@ const Index = () => {
           callCount: '本月已叫1次',
           displayType: '友好提示型',
           status: '待上门拜访',
-          actionType: 'suggestion',
+          actionType: 'suggestion' as const,
           actionText: '拜访建议'
         },
         {
@@ -84,7 +84,7 @@ const Index = () => {
           callCount: '本月已叫1次',
           displayType: '友好提示型',
           status: '待AI二次呼叫',
-          actionType: 'call'
+          actionType: 'call' as const
         }
       ]
     }
@@ -99,20 +99,23 @@ const Index = () => {
   };
   
   return (
-    <div className="flex flex-col min-h-screen pb-16 relative">
+    <div className="flex flex-col min-h-screen pb-16 relative bg-gray-50">
       <Header />
       
       <main className="flex-1 px-4 pb-4">
         {/* Search Bar */}
         <div className="flex items-center gap-2 my-4">
-          <Input 
-            type="text" 
-            placeholder="输入客户名或房号等搜索" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
-          <Button className="bg-white border border-gray-300 text-black hover:bg-gray-100">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input 
+              type="text" 
+              placeholder="输入客户名或房号等搜索" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 border-gray-300 focus:border-app-blue shadow-sm rounded-lg"
+            />
+          </div>
+          <Button className="bg-app-blue hover:bg-app-blue/90 text-white shadow-sm rounded-lg">
             搜索
           </Button>
         </div>
@@ -127,7 +130,7 @@ const Index = () => {
         {/* Building List */}
         <div className="space-y-3">
           {buildings.map(building => (
-            <div key={building.id} className="border border-gray-200 rounded-md overflow-hidden">
+            <div key={building.id} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white">
               <PropertyItem 
                 building={building}
                 isExpanded={expandedBuilding === building.id}
@@ -147,8 +150,8 @@ const Index = () => {
       </main>
       
       {/* Fixed Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 bg-gray-200 text-center">
-        <Button className="w-full bg-gray-400 hover:bg-gray-500 text-white">一键AI呼叫</Button>
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg">
+        <Button className="w-full bg-app-orange hover:bg-app-orange/90 text-white font-medium rounded-lg py-5">一键AI呼叫</Button>
       </div>
     </div>
   );
