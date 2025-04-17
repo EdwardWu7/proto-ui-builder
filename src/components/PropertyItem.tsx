@@ -10,22 +10,33 @@ interface Building {
   network: string;
   manager: string;
   tenants: any[];
+  selected?: boolean;
 }
 
 interface PropertyItemProps {
   building: Building;
   isExpanded: boolean;
   onToggle: () => void;
+  onSelect: (buildingId: string, checked: boolean) => void;
 }
 
-const PropertyItem: React.FC<PropertyItemProps> = ({ building, isExpanded, onToggle }) => {
+const PropertyItem: React.FC<PropertyItemProps> = ({ building, isExpanded, onToggle, onSelect }) => {
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(building.id, !building.selected);
+  };
+
   return (
     <div 
       className="p-4 bg-white flex items-center justify-between hover:bg-gray-50 cursor-pointer transition-colors rounded-t-lg shadow-sm"
       onClick={onToggle}
     >
       <div className="flex items-center gap-3">
-        <Checkbox id={`checkbox-${building.id}`} onClick={(e) => e.stopPropagation()} />
+        <Checkbox 
+          id={`checkbox-${building.id}`} 
+          checked={building.selected} 
+          onClick={handleCheckboxClick}
+        />
         <div>
           <div className="flex items-center">
             <Building2 className="w-5 h-5 text-app-blue mr-2" />

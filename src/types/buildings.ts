@@ -6,6 +6,7 @@ export interface Building {
   network: string;
   manager: string;
   created_at: string;
+  selected?: boolean;
 }
 
 export interface Tenant {
@@ -21,4 +22,5 @@ export interface Tenant {
   action_type: 'call' | 'work' | 'bill' | 'suggestion';
   action_text: string | null;
   created_at: string;
+  selected?: boolean;
 }

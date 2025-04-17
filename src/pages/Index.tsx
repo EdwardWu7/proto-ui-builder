@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, Phone } from 'lucide-react';
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ const Index = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [tenants, setTenants] = useState<{[key: string]: Tenant[]}>({}); 
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedTenants, setSelectedTenants] = useState<{[key: string]: boolean}>({});
+  const [selectedBuildings, setSelectedBuildings] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
   // Fetch buildings from Supabase
@@ -163,6 +166,112 @@ const Index = () => {
     });
   };
   
+  // Handle building selection (select/deselect all tenants in the building)
+  const handleBuildingSelection = (buildingId: string, checked: boolean) => {
+    // Update building selection state
+    setSelectedBuildings(prev => ({
+      ...prev,
+      [buildingId]: checked
+    }));
+    
+    // If we have tenants for this building, select/deselect all of them
+    if (tenants[buildingId]) {
+      const updatedTenants = { ...selectedTenants };
+      
+      tenants[buildingId].forEach(tenant => {
+        updatedTenants[tenant.id] = checked;
+      });
+      
+      setSelectedTenants(updatedTenants);
+    }
+    
+    // If not already fetched, fetch tenants for this building and select them
+    if (!tenants[buildingId] && checked) {
+      const fetchTenants = async () => {
+        try {
+          const { data: tenantsData, error: tenantsError } = await supabase
+            .from('tenants')
+            .select('*')
+            .eq('building_id', buildingId)
+            .order('name');
+            
+          if (tenantsError) {
+            console.error("Error fetching tenants:", tenantsError);
+            toast({
+              title: "数据加载失败",
+              description: "无法加载住户数据",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (tenantsData) {
+            // Ensure the tenantsData conforms to the Tenant type
+            const typedTenantsData: Tenant[] = tenantsData.map(tenant => ({
+              ...tenant,
+              action_type: tenant.action_type as 'call' | 'work' | 'bill' | 'suggestion'
+            }));
+            
+            // Update tenants state
+            setTenants(prev => ({
+              ...prev,
+              [buildingId]: typedTenantsData
+            }));
+            
+            // Select all tenants
+            const updatedTenants = { ...selectedTenants };
+            typedTenantsData.forEach(tenant => {
+              updatedTenants[tenant.id] = checked;
+            });
+            setSelectedTenants(updatedTenants);
+          }
+        } catch (error) {
+          console.error("Error in fetchTenants:", error);
+          toast({
+            title: "数据加载失败",
+            description: "无法加载住户数据",
+            variant: "destructive",
+          });
+        }
+      };
+      
+      fetchTenants();
+    }
+    
+    toast({
+      title: checked ? "已选择整栋楼" : "已取消选择",
+      description: checked ? "已选择此楼所有住户" : "已取消选择此楼所有住户",
+    });
+  };
+  
+  // Handle individual tenant selection
+  const handleTenantSelection = (tenantId: string, checked: boolean) => {
+    setSelectedTenants(prev => ({
+      ...prev,
+      [tenantId]: checked
+    }));
+    
+    // Check if all tenants in a building are selected, if so, select the building too
+    for (const buildingId in tenants) {
+      const buildingTenants = tenants[buildingId];
+      const allSelected = buildingTenants.every(tenant => 
+        tenant.id === tenantId ? checked : selectedTenants[tenant.id]
+      );
+      
+      if (allSelected !== selectedBuildings[buildingId]) {
+        setSelectedBuildings(prev => ({
+          ...prev,
+          [buildingId]: allSelected
+        }));
+      }
+    }
+  };
+  
+  // Get count of selected tenants
+  const getSelectedTenantsCount = () => {
+    return Object.values(selectedTenants).filter(Boolean).length;
+  };
+  
   return (
     <div className="flex flex-col min-h-screen pb-16 relative bg-gray-50">
       <Header />
@@ -220,10 +329,12 @@ const Index = () => {
                   units: `${building.units}户`,
                   network: building.network,
                   manager: `管家:${building.manager}`,
-                  tenants: tenants[building.id] || []
+                  tenants: tenants[building.id] || [],
+                  selected: selectedBuildings[building.id]
                 }}
                 isExpanded={expandedBuilding === building.id}
                 onToggle={() => handleExpand(building.id)}
+                onSelect={handleBuildingSelection}
               />
               
               {expandedBuilding === building.id && tenants[building.id] && (
@@ -248,8 +359,10 @@ const Index = () => {
                             displayType: tenant.display_type,
                             status: tenant.status,
                             actionType: tenant.action_type,
-                            actionText: tenant.action_text || undefined
+                            actionText: tenant.action_text || undefined,
+                            selected: selectedTenants[tenant.id]
                           }}
+                          onSelect={handleTenantSelection}
                         />
                       ))
                     : 
@@ -267,8 +380,10 @@ const Index = () => {
                             displayType: tenant.display_type,
                             status: tenant.status,
                             actionType: tenant.action_type,
-                            actionText: tenant.action_text || undefined
+                            actionText: tenant.action_text || undefined,
+                            selected: selectedTenants[tenant.id]
                           }}
+                          onSelect={handleTenantSelection}
                         />
                       ))
                   )}
@@ -281,7 +396,12 @@ const Index = () => {
       
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-200 shadow-lg">
-        <Button className="w-full bg-app-orange hover:bg-app-orange/90 text-white font-medium rounded-lg py-5">一键AI呼叫</Button>
+        <Button 
+          className="w-full bg-app-orange hover:bg-app-orange/90 text-white font-medium rounded-lg py-5"
+          disabled={getSelectedTenantsCount() === 0}
+        >
+          一键AI呼叫 {getSelectedTenantsCount() > 0 ? `(${getSelectedTenantsCount()})` : ''}
+        </Button>
       </div>
     </div>
   );

@@ -15,13 +15,20 @@ interface Tenant {
   status: string;
   actionType: 'call' | 'work' | 'bill' | 'suggestion';
   actionText?: string;
+  selected?: boolean;
 }
 
 interface TenantItemProps {
   tenant: Tenant;
+  onSelect: (tenantId: string, checked: boolean) => void;
 }
 
-const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
+const TenantItem: React.FC<TenantItemProps> = ({ tenant, onSelect }) => {
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(tenant.id, !tenant.selected);
+  };
+
   const getActionButton = () => {
     switch (tenant.actionType) {
       case 'bill':
@@ -89,7 +96,11 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
     <div className="p-3 border-b border-gray-100 bg-white hover:bg-gray-50">
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center gap-2">
-          <Checkbox id={`tenant-${tenant.id}`} />
+          <Checkbox 
+            id={`tenant-${tenant.id}`} 
+            checked={tenant.selected}
+            onClick={handleCheckboxClick}
+          />
           <h3 className="font-bold">{tenant.name}</h3>
         </div>
         {getActionButton()}
