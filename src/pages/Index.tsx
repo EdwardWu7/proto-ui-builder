@@ -9,7 +9,7 @@ import PropertyItem from '@/components/PropertyItem';
 import TenantItem from '@/components/TenantItem';
 import CallDialog from '@/components/CallDialog';
 import { supabase } from "@/integrations/supabase/client";
-import { Building, Tenant } from '@/types/buildings';
+import { Building, Tenant, CreateCallRecordPayload } from '@/types/buildings';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -282,13 +282,18 @@ const Index = () => {
     
     try {
       const taskId = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      
+      const payload: CreateCallRecordPayload = {
+        task_id: taskId,
+        creator: "张三丰",
+        total_calls: selectedCount
+      };
+      
       const { data: newCallRecord, error } = await supabase
         .from('call_records')
         .insert({
-          task_id: taskId,
-          creator: "张三丰",
+          ...payload,
           status: 'in_progress',
-          total_calls: selectedCount,
           connected_calls: 0,
           rejected_calls: 0,
           busy_calls: 0,
@@ -312,6 +317,10 @@ const Index = () => {
         return;
       }
       
+      if (!newCallRecord) {
+        throw new Error("Failed to create call record");
+      }
+      
       const callDetailsToInsert = Object.entries(selectedTenants)
         .filter(([_, isSelected]) => isSelected)
         .map(([tenantId, _]) => {
@@ -330,7 +339,7 @@ const Index = () => {
             unit_info: `${buildingName}${tenant.unit_number}`,
             debt_amount: tenant.debt_amount,
             debt_period: tenant.debt_period,
-            call_status: 'no_answer',
+            call_status: 'no_answer' as const,
             has_recording: false
           };
         })

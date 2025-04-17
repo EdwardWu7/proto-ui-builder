@@ -36,6 +36,107 @@ export type Database = {
         }
         Relationships: []
       }
+      call_details: {
+        Row: {
+          call_duration: number | null
+          call_status: string
+          created_at: string
+          debt_amount: number
+          debt_period: number
+          has_recording: boolean
+          id: string
+          record_id: string
+          tenant_name: string
+          unit_info: string
+        }
+        Insert: {
+          call_duration?: number | null
+          call_status: string
+          created_at?: string
+          debt_amount: number
+          debt_period: number
+          has_recording?: boolean
+          id?: string
+          record_id: string
+          tenant_name: string
+          unit_info: string
+        }
+        Update: {
+          call_duration?: number | null
+          call_status?: string
+          created_at?: string
+          debt_amount?: number
+          debt_period?: number
+          has_recording?: boolean
+          id?: string
+          record_id?: string
+          tenant_name?: string
+          unit_info?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_details_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "call_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_records: {
+        Row: {
+          busy_calls: number
+          connected_calls: number
+          created_at: string
+          creator: string
+          debt_count: number
+          empty_count: number
+          hangup_count: number
+          id: string
+          intercept_count: number
+          mute_count: number
+          no_answer_calls: number
+          rejected_calls: number
+          status: string
+          task_id: string
+          total_calls: number
+        }
+        Insert: {
+          busy_calls?: number
+          connected_calls?: number
+          created_at?: string
+          creator: string
+          debt_count?: number
+          empty_count?: number
+          hangup_count?: number
+          id?: string
+          intercept_count?: number
+          mute_count?: number
+          no_answer_calls?: number
+          rejected_calls?: number
+          status: string
+          task_id: string
+          total_calls?: number
+        }
+        Update: {
+          busy_calls?: number
+          connected_calls?: number
+          created_at?: string
+          creator?: string
+          debt_count?: number
+          empty_count?: number
+          hangup_count?: number
+          id?: string
+          intercept_count?: number
+          mute_count?: number
+          no_answer_calls?: number
+          rejected_calls?: number
+          status?: string
+          task_id?: string
+          total_calls?: number
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           action_text: string | null

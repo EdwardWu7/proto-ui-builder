@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from "@/components/ui/input";
@@ -42,7 +41,7 @@ const CallRecords = () => {
       }
 
       if (data) {
-        setCallRecords(data);
+        setCallRecords(data as CallRecord[]);
         if (data.length > 0) {
           setExpandedRecordId(data[0].id);
           await fetchCallDetails(data[0].id);
@@ -83,7 +82,7 @@ const CallRecords = () => {
       if (data) {
         setCallDetails(prev => ({
           ...prev,
-          [recordId]: data
+          [recordId]: data as CallDetail[]
         }));
       }
     } catch (error) {
