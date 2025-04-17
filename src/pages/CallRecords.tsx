@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Phone, PhoneCall, PhoneOff, PhoneForwarded, BarChart4 } from "lucide-react";
 import Header from '@/components/Header';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CallRecord, CallDetail } from '@/types/buildings';
 
 // Mock data for demonstration
@@ -146,89 +146,118 @@ const CallRecords = () => {
         <h1 className="text-2xl font-bold text-center text-app-blue mb-6">呼叫记录</h1>
         
         {/* Search Bar */}
-        <div className="flex mb-6 gap-2">
-          <Input 
-            className="flex-1" 
-            placeholder="输入客户名或房号称搜索" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex mb-6 gap-2 relative">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input 
+              className="pl-10" 
+              placeholder="输入客户名或房号称搜索" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <Button onClick={handleSearch}>搜索</Button>
         </div>
         
         <div className="space-y-4">
           {/* Call Records */}
           {mockCallRecords.map(record => (
-            <div key={record.id} className="border rounded-lg bg-white overflow-hidden">
-              {/* Record Header */}
+            <div key={record.id} className="border rounded-lg bg-white overflow-hidden shadow-sm hover:shadow transition-shadow duration-200">
+              {/* Record Header - Updated styling here */}
               <div 
-                className="p-4 cursor-pointer" 
+                className="p-5 cursor-pointer bg-gradient-to-r from-white to-gray-50 border-b"
                 onClick={() => toggleExpand(record.id)}
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-xl font-bold">呼叫任务:{record.task_id}</h2>
-                    <span className="text-sm text-gray-500">创建人: {record.creator}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-app-blue/10 p-2 rounded-full">
+                      <PhoneCall className="h-5 w-5 text-app-blue" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">呼叫任务:{record.task_id}</h2>
+                      <div className="text-sm text-gray-500 mt-1">创建人: {record.creator} · {record.created_at}</div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusClass(record.status)}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(record.status)}`}>
                       {getStatusText(record.status)}
                     </span>
-                    {expandedRecordId === record.id ? 
-                      <ChevronDown className="h-5 w-5" /> : 
-                      <ChevronRight className="h-5 w-5" />
-                    }
+                    <div className="bg-gray-100 rounded-full p-1">
+                      {expandedRecordId === record.id ? 
+                        <ChevronDown className="h-5 w-5 text-gray-600" /> : 
+                        <ChevronRight className="h-5 w-5 text-gray-600" />
+                      }
+                    </div>
                   </div>
                 </div>
                 
                 {/* Statistics */}
-                <div className="grid grid-cols-5 gap-2 mt-4 text-sm">
-                  <div>总数:{record.total_calls}</div>
-                  <div>接通:{record.connected_calls}</div>
-                  <div>拒接:{record.rejected_calls}</div>
-                  <div>占线:{record.busy_calls}</div>
-                  <div>无应答:{record.no_answer_calls}</div>
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-500">总数</div>
+                    <div className="text-lg font-semibold text-app-blue">{record.total_calls}</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-500">接通</div>
+                    <div className="text-lg font-semibold text-green-600">{record.connected_calls}</div>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-500">拒接</div>
+                    <div className="text-lg font-semibold text-red-500">{record.rejected_calls}</div>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-500">占线</div>
+                    <div className="text-lg font-semibold text-orange-500">{record.busy_calls}</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-3">
+                    <div className="text-xs text-gray-500">无应答</div>
+                    <div className="text-lg font-semibold text-purple-600">{record.no_answer_calls}</div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-5 gap-2 mt-2 text-sm">
-                  <div>拦截:{record.intercept_count}</div>
-                  <div>空号:{record.empty_count}</div>
-                  <div>欠费:{record.debt_count}</div>
-                  <div>关机:{record.hangup_count}</div>
-                  <div>屏蔽:{record.mute_count}</div>
+                
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">拦截: {record.intercept_count}</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">空号: {record.empty_count}</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">欠费: {record.debt_count}</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">关机: {record.hangup_count}</span>
+                  <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">屏蔽: {record.mute_count}</span>
                 </div>
               </div>
               
               {/* Expanded Details */}
               {expandedRecordId === record.id && (
-                <div className="border-t p-4 bg-gray-50 space-y-4">
+                <div className="p-4 bg-gray-50 space-y-4">
                   {mockCallDetails.filter(detail => detail.record_id === record.id).map(detail => (
-                    <Card key={detail.id} className="p-0 overflow-hidden">
-                      <div className="grid grid-cols-2 p-3">
+                    <Card key={detail.id} className="p-0 overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-center p-4 border-b">
                         <div>
-                          <div className="font-medium">{detail.tenant_name}</div>
-                          <div className="text-sm text-gray-600">{detail.unit_info}</div>
-                          <div className="text-sm text-red-600">
-                            欠:{detail.debt_amount}元 欠费时长:{detail.debt_period}月
+                          <div className="font-medium text-gray-800">{detail.tenant_name}</div>
+                          <div className="text-sm text-gray-500">{detail.unit_info}</div>
+                          <div className="text-sm text-red-600 mt-1 font-medium">
+                            欠费金额: <span className="font-bold">{detail.debt_amount}元</span> · 时长: {detail.debt_period}月
                           </div>
                         </div>
-                        <div className="flex justify-end">
-                          <Button variant="outline" className="ml-auto">
+                        {detail.has_recording && (
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <PhoneCall className="w-3 h-3" />
                             听录音
                           </Button>
-                        </div>
+                        )}
                       </div>
-                      <div className="grid grid-cols-2 border-t">
+                      <div className="grid grid-cols-2">
                         <div className={`p-3 text-center ${getCallStatusClass(detail.call_status)}`}>
-                          {getCallStatusText(detail.call_status)}
+                          <div className="text-sm font-medium">
+                            {getCallStatusText(detail.call_status)}
+                          </div>
                         </div>
                         {detail.call_duration && (
                           <div className="p-3 text-center bg-gray-100">
-                            {detail.call_duration}秒
+                            <div className="text-sm font-medium">通话时长: {detail.call_duration}秒</div>
                           </div>
                         )}
                         {!detail.call_duration && (
                           <div className="p-3 text-center bg-gray-100">
-                            对话文本
+                            <div className="text-sm font-medium">暂无对话文本</div>
                           </div>
                         )}
                       </div>
