@@ -156,14 +156,13 @@ const CallRecords = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleSearch}>搜索</Button>
+          <Button>搜索</Button>
         </div>
         
         <div className="space-y-4">
-          {/* Call Records */}
           {mockCallRecords.map(record => (
             <div key={record.id} className="border rounded-lg bg-white overflow-hidden shadow-sm hover:shadow transition-shadow duration-200">
-              {/* Record Header - Updated styling here */}
+              {/* Record Header */}
               <div 
                 className="p-5 cursor-pointer bg-gradient-to-r from-white to-gray-50 border-b"
                 onClick={() => toggleExpand(record.id)}
@@ -238,8 +237,8 @@ const CallRecords = () => {
                           </div>
                         </div>
                         {detail.has_recording && (
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <PhoneCall className="w-3 h-3" />
+                          <Button variant="outline" size="sm">
+                            <PhoneCall className="mr-2 h-4 w-4" />
                             听录音
                           </Button>
                         )}
