@@ -95,7 +95,7 @@
 }
 
 .filter-badge {
-  @apply text-gray-700 px-3 py-1.5 rounded-full text-xs font-medium;
+  @apply text-gray-700 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:shadow-sm;
 }
 
 .tag-badge {
