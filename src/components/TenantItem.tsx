@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Phone, Calendar, Clock, Tag, AlertCircle } from 'lucide-react';
 
 interface Tenant {
   id: string;
@@ -52,6 +53,12 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
     }
   };
 
+  // Function to extract the call count number from the string
+  const getCallCount = () => {
+    const match = tenant.callCount.match(/\d+/);
+    return match ? match[0] : '1';
+  };
+
   return (
     <div className="p-3 border-b border-gray-100 bg-white hover:bg-gray-50">
       <div className="flex items-start justify-between mb-1">
@@ -70,9 +77,18 @@ const TenantItem: React.FC<TenantItemProps> = ({ tenant }) => {
         </div>
         
         <div className="flex flex-wrap gap-2 mt-2">
-          <span className="tag-badge">{tenant.callCount}</span>
-          <span className="tag-badge">{tenant.displayType}</span>
-          <span className="tag-badge bg-app-gray">{tenant.status}</span>
+          <span className="tag-badge bg-blue-50 border-blue-200">
+            <Phone className="h-3 w-3 mr-1 text-blue-500" />
+            <span>{getCallCount()}</span>
+          </span>
+          <span className="tag-badge bg-amber-50 border-amber-200">
+            <Tag className="h-3 w-3 mr-1 text-amber-500" />
+            <span>{tenant.displayType}</span>
+          </span>
+          <span className="tag-badge bg-gray-100 border-gray-300">
+            <AlertCircle className="h-3 w-3 mr-1 text-gray-500" />
+            <span>{tenant.status}</span>
+          </span>
         </div>
       </div>
     </div>
