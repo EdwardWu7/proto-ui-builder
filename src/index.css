@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -98,4 +92,28 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.filter-badge {
+  @apply bg-app-gray text-gray-700 px-2 py-1 rounded-sm text-xs;
+}
+
+.tag-badge {
+  @apply bg-app-gray text-gray-700 px-2 py-1 rounded-sm text-xs mx-1;
+}
+
+.action-badge {
+  @apply text-white px-3 py-1 rounded-sm text-xs font-medium;
+}
+
+.action-badge-orange {
+  @apply bg-app-orange;
+}
+
+.action-badge-blue {
+  @apply bg-app-blue;
+}
+
+.action-badge-gray {
+  @apply bg-app-darkGray;
 }
